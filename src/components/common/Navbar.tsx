@@ -2,10 +2,11 @@
 
 import { AppBar, Toolbar, Typography, Box } from '@mui/material';
 import UserProfileMenu from './UserProfileMenu';
+import { useState } from 'react';
 
 export default function Navbar() {
   return (
-    <AppBar position="static">
+    <AppBar position="static" >
       <Toolbar>
         <Typography variant="h6">
           HRMS
@@ -13,7 +14,7 @@ export default function Navbar() {
 
         <Box sx={{ flexGrow: 1 }} />
 
-        <UserProfileMenu />
+        <UserProfileMenu  />
       </Toolbar>
     </AppBar>
   );

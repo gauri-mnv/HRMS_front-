@@ -25,21 +25,44 @@ export default function SignupPage() {
 const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8006";
 
   // 
+
+  const isValidEmail = (email: string) => {
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    return emailRegex.test(email);
+  };
+  
+  const isValidPassword = (password: string) => {
+    const passwordRegex = /^(?=.*[A-Za-z])(?=.*\d)[A-Za-z\d]{8,}$/;
+    return passwordRegex.test(password);
+  };
+  
   const handleSignUp = async () => {
     try {
         setError('');
+              // EMAIL VALIDATION
+              if (!isValidEmail(email)) {
+                setError('Please enter a valid email address (must include @).');
+                return;
+              }
 
+              // PASSWORD VALIDATION
+              if (!isValidPassword(password)) {
+                setError(
+                  'Password must be at least 8 characters long and include letters and numbers.'
+                );
+                return;
+              }
       await axios.post(
         // 'http://localhost:8006/auth/signup',
         `${API_URL}/auth/signup`,
         {   email, 
             password ,
-            roleName: 'EMPLOYEE', // or FOUNDER / CO_FOUNDER
+            roleName:'EMPLOYEE', // or FOUNDER / CO_FOUNDER
         }
       );
 
       
-        router.push('/signin');
+        router.push('/auth/signin');
       } catch (err: any) {
         if (err.response?.status === 409) {
           setError('Email already registered. Please login.');
@@ -62,6 +85,10 @@ const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8006";
           label="Email"
           margin="normal"
           value={email}
+                  error={!!error && !isValidEmail(email)}
+          helperText={
+            email && !isValidEmail(email) ? 'Invalid email format' : ''
+          }
           onChange = {
             (e) =>setEmail(e.target.value)
           }
@@ -73,6 +100,12 @@ const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8006";
           type="password"
           margin="normal"
           value={password}
+          error={!!error && !isValidPassword(password)}
+          helperText={
+            password && !isValidPassword(password)
+              ? 'Min 8 chars, letters + numbers'
+              : ''
+          }
           onChange = {
             (e) =>setPassword(e.target.value)
           }

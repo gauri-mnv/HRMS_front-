@@ -21,26 +21,70 @@ export default function SignInPage() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
+  const [loading,setLoading ] = useState(false);
 
 
   // 
+  const isValidEmail = (email: string) => {
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    return emailRegex.test(email);
+  };
+  
+  const isValidPassword = (password: string) => {
+    const passwordRegex = /^(?=.*[A-Za-z])(?=.*\d)[A-Za-z\d]{8,}$/;
+    return passwordRegex.test(password);
+  };
+
   const handleSignIn = async (e?: React.FormEvent) => {
     e?.preventDefault();
     try {
       setError('');
-
+      if (!isValidEmail(email)) {
+        setError('Please enter a valid email address.');
+        return;
+      }
+  
+      if (!password) {
+        setError('Password is required.');
+        return;
+      }
+      setLoading(true);
+      try {
       const res = await axios.post(
         `${API_URL}/auth/signin`,
         { email, password }
       );
 
-      const { access_token, user } = res.data;
-      const role = user.role;
+      const {accessToken, refreshToken, user  } = res.data.data;
+      console.log("res", accessToken, refreshToken, user);
+
+      if (!localStorage.getItem('accessToken') || !localStorage.getItem('refreshToken')) {
+        console.error('Access token or refresh token not found in local storage');
+        setError('Access token or refresh token not found.');
+        return;
+      }
+      // Check if user object is present in local storage
+      if (!localStorage.getItem('user')) {
+        console.error('User object not found in local storage');
+        setError('User object not found.');
+        return;
+      }
+      if (!user || !user.role) {
+        console.error('Role property not found in user object', res.data);
+        setError('Role property not found.');
+         return;
+      } 
+
+
+    // console.log(access_token);
+    //     console.log(user);
+    //         console.log(refresh_token);
 
       // THIS IS FOR LOCAL STORAGE
-      localStorage.setItem('accessToken', access_token);
+      localStorage.setItem('accessToken', accessToken);
+      localStorage.setItem('refreshToken', refreshToken);
       localStorage.setItem('user', JSON.stringify(user));
-
+      const role = user.role.name;
       // ROLE-BASED REDIRECT
       if (
         role === 'ADMIN' ||
@@ -51,8 +95,12 @@ export default function SignInPage() {
       } else {
         router.push('/employee/dashboard');
       }
-    } catch (err) {
-      console.error('Login failed', err);
+    } catch (err:any) {
+      console.error('Invalid email or password.', err);
+      setError('Invalid email or password.');
+      setLoading(false);
+    }}catch (err: any) {
+      console.error('Error making POST request', err);
     }
   };
 
