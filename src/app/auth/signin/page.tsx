@@ -13,7 +13,8 @@ import {
 import { useRouter } from 'next/navigation';
 import { useState } from 'react';
 import axios from 'axios';
-const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8006";
+const API_URL = process.env.NEXT_PUBLIC_API_URL ||"http://localhost:8006";
+
 export default function SignInPage() {
 
   const router = useRouter();
@@ -48,16 +49,22 @@ export default function SignInPage() {
         setError('Password is required.');
         return;
       }
-      setLoading(true);
+      // setLoading(true);
+      console.log(email, password)
       try {
       const res = await axios.post(
         `${API_URL}/auth/signin`,
         { email, password }
       );
-
+      //console.log(email, password)
       const {accessToken, refreshToken, user  } = res.data.data;
-      console.log("res", accessToken, refreshToken, user);
+      console.log("res", accessToken, refreshToken, "user", user);
 
+      // THIS IS FOR LOCAL STORAGE
+      localStorage.setItem('accessToken', accessToken);
+      localStorage.setItem('refreshToken', refreshToken);
+      localStorage.setItem('user', JSON.stringify(user));
+      
       if (!localStorage.getItem('accessToken') || !localStorage.getItem('refreshToken')) {
         console.error('Access token or refresh token not found in local storage');
         setError('Access token or refresh token not found.');
@@ -80,27 +87,19 @@ export default function SignInPage() {
     //     console.log(user);
     //         console.log(refresh_token);
 
-      // THIS IS FOR LOCAL STORAGE
-      localStorage.setItem('accessToken', accessToken);
-      localStorage.setItem('refreshToken', refreshToken);
-      localStorage.setItem('user', JSON.stringify(user));
       const role = user.role.name;
       // ROLE-BASED REDIRECT
-      if (
-        role === 'ADMIN' ||
-        role === 'FOUNDER' ||
-        role === 'COFOUNDER'
-      ) {
+      if (['ADMIN','FOUNDER','COFOUNDER'].includes(role)) { 
         router.push('/admin/dashboard');
       } else {
         router.push('/employee/dashboard');
       }
     } catch (err:any) {
-      console.error('Invalid email or password.', err);
-      setError('Invalid email or password.');
-      setLoading(false);
+      console.error( err);
+      setError(err?.response?.data?.message || 'Invalid email or password.');
+      // setLoading(false);
     }}catch (err: any) {
-      console.error('Error making POST request', err);
+      console.error('Error', err);
     }
   };
 
@@ -128,7 +127,7 @@ export default function SignInPage() {
         <TextField
           fullWidth
           label="Password"
-          type="password"
+          // type="password"
           margin="normal"
           value={password}
           onChange = {
@@ -166,5 +165,6 @@ export default function SignInPage() {
         </Link>
       </Typography>
     </Container>
-  );
+       );
 }
+ 
